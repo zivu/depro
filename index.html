@@ -60,7 +60,7 @@
                 button.classList.remove('btn-dark');
                 button.classList.add('btn-success');
                 button.textContent = 'Start';
-                statusText.textContent = 'How about translating some IT jargon?';
+                wait(statusText);
                 // Send stop request
                 fetch(`http://localhost:8080/api/chat/stop?id=${id}`)
                     .catch(error => console.error('Error:', error));
@@ -78,6 +78,18 @@
             countdownElement.textContent = `3..2..1`;
             setTimeout(() => {
                 countdownElement.textContent = `Speak!`;
+            }, 1000);
+        }
+        function wait(wait) {
+            wait.textContent = `Wait.`;
+            setTimeout(() => {
+                wait.textContent = `Wait..`;
+                setTimeout(() => {
+                    wait.textContent = `Wait...`;
+                    setTimeout(() => {
+                        wait.textContent = `How about translating some IT jargon?`;
+                    }, 1000);
+                }, 1000);
             }, 1000);
         }
     </script>
