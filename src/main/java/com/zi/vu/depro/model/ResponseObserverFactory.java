@@ -5,12 +5,14 @@ import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1.StreamingRecognitionResult;
 import com.google.cloud.speech.v1.StreamingRecognizeResponse;
-import com.google.protobuf.ByteString;
 import com.zi.vu.depro.service.AudioService;
 import com.zi.vu.depro.service.ChatGPTService;
 import com.zi.vu.depro.service.GoogleTextToSpeechService;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @UtilityClass
@@ -19,6 +21,9 @@ public class ResponseObserverFactory {
     public ResponseObserver<StreamingRecognizeResponse> create(ChatGPTService chatGPTService, GoogleTextToSpeechService textToSpeechService,
                                                                AudioService audioService) {
         return new ResponseObserver<>() {
+
+            private final List<String> sentences = new ArrayList<>();
+
             /**
              * This variable holds what was said by a user.
              */
@@ -35,8 +40,7 @@ public class ResponseObserverFactory {
                 SpeechRecognitionAlternative alternative = result.getAlternativesList().getFirst();
                 if (!alternative.getTranscript().isEmpty()) {
                     String translation = chatGPTService.translate(alternative.getTranscript());
-                    ByteString speech = textToSpeechService.toSpeech(translation);
-                    audioService.playAudio(speech);
+                    sentences.add(translation);
                 }
             }
 
@@ -45,6 +49,8 @@ public class ResponseObserverFactory {
              * from technical language and to Google text-to-speech service to play it later.
              */
             public void onComplete() {
+                String speech = String.join(". ", sentences);
+                audioService.playAudio(textToSpeechService.toSpeech(speech));
             }
 
             public void onError(Throwable t) {
