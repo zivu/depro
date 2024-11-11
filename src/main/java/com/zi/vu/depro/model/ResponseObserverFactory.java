@@ -12,9 +12,6 @@ import com.zi.vu.depro.service.GoogleTextToSpeechService;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Slf4j
 @UtilityClass
 public class ResponseObserverFactory {
@@ -25,7 +22,6 @@ public class ResponseObserverFactory {
             /**
              * This variable holds what was said by a user.
              */
-            private final List<String> sentences = new ArrayList<>();
 
             public void onStart(StreamController controller) {
             }
@@ -37,7 +33,11 @@ public class ResponseObserverFactory {
             public void onResponse(StreamingRecognizeResponse response) {
                 StreamingRecognitionResult result = response.getResultsList().getFirst();
                 SpeechRecognitionAlternative alternative = result.getAlternativesList().getFirst();
-                sentences.add(alternative.getTranscript());
+                if (!alternative.getTranscript().isEmpty()) {
+                    String translation = chatGPTService.translate(alternative.getTranscript());
+                    ByteString speech = textToSpeechService.toSpeech(translation);
+                    audioService.playAudio(speech);
+                }
             }
 
             /**
@@ -45,10 +45,6 @@ public class ResponseObserverFactory {
              * from technical language and to Google text-to-speech service to play it later.
              */
             public void onComplete() {
-                String recordedSpeech = String.join(" ", sentences);
-                String translation = chatGPTService.translate(recordedSpeech);
-                ByteString speech = textToSpeechService.toSpeech(translation);
-                audioService.playAudio(speech);
             }
 
             public void onError(Throwable t) {
