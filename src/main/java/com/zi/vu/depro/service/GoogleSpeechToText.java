@@ -37,7 +37,6 @@ public class GoogleSpeechToText {
     public static final boolean SIGNED = true;
     public static final boolean BIG_ENDIAN = false;
     public static final String US_LANGUAGE = "en-US";
-    private final RecognitionConfig recognitionConfig = buildRecordingConfig();
     private final ChatGPTService chatGPTService;
     private final GoogleTextToSpeechService textToSpeechService;
     private final AudioService audioService;
@@ -78,7 +77,7 @@ public class GoogleSpeechToText {
                 googleSpeechAPI.streamingRecognizeCallable().splitCall(responseObserver);
         StreamingRecognitionConfig streamingRecognitionConfig =
                 StreamingRecognitionConfig.newBuilder()
-                        .setConfig(recognitionConfig)
+                        .setConfig(buildRecordingConfig())
                         .build();
         StreamingRecognizeRequest configRequest =
                 StreamingRecognizeRequest.newBuilder()
@@ -87,6 +86,9 @@ public class GoogleSpeechToText {
         configuredGoogleAPI.send(configRequest);
         AudioFormat withAudioFormat = new AudioFormat(SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, CHANNELS, SIGNED, BIG_ENDIAN);
         DataLine.Info microphone = new DataLine.Info(TargetDataLine.class, withAudioFormat);
+        if (!AudioSystem.isLineSupported(microphone)) {
+            throw new IllegalArgumentException("Microphone not supported");
+        }
         TargetDataLine recorder = (TargetDataLine) AudioSystem.getLine(microphone);
         associateSessionIdWithMicrophone(id, recorder);
         recorder.open(withAudioFormat);
