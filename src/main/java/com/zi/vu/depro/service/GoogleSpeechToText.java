@@ -101,6 +101,7 @@ public class GoogleSpeechToText {
                             .setAudioContent(ByteString.copyFrom(data))
                             .build();
             configuredGoogleAPI.send(speechToTextRequest);
+            responseObserver.incrementNumberOfMsgs();
         }
         responseObserver.onComplete();
     }
