@@ -23,11 +23,7 @@ public class ResponseObserverFactory {
         return new ResponseObserver<>() {
 
             private final List<String> sentences = new ArrayList<>();
-            AtomicCounter numberOfMsgs = new AtomicCounter();
 
-            public void incrementNumberOfMsgs() {
-                numberOfMsgs.increment();
-            }
             /**
              * This variable holds what was said by a user.
              */
