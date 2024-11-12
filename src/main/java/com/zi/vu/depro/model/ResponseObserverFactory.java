@@ -53,6 +53,14 @@ public class ResponseObserverFactory {
              * from technical language and to Google text-to-speech service to play it later.
              */
             public void onComplete() {
+                while (sentences.size() != numberOfMsgs.getValue()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
                 String speech = String.join(". ", sentences);
                 audioService.playAudio(textToSpeechService.toSpeech(speech));
             }
