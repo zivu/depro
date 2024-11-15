@@ -35,7 +35,7 @@ public class GoogleSpeechToText {
     public static final int SAMPLE_SIZE_IN_BITS = 16;
     public static final int CHANNELS = 1;
     public static final boolean SIGNED = true;
-    public static final boolean BIG_ENDIAN = true;
+    public static final boolean BIG_ENDIAN = false;
     public static final String US_LANGUAGE = "en-US";
     private final RecognitionConfig recognitionConfig = buildRecordingConfig();
     private final ChatGPTService chatGPTService;
@@ -43,7 +43,6 @@ public class GoogleSpeechToText {
     private final AudioService audioService;
     private final Map<String, TargetDataLine> sessions = new ConcurrentHashMap<>();
     private static SpeechClient googleSpeechAPI = null;
-    private byte[] audioText;
 
     static {
         try {
@@ -63,26 +62,6 @@ public class GoogleSpeechToText {
         if (null != targetDataLine) {
             targetDataLine.stop();
             targetDataLine.close();
-        }
-        OkHttpClient client = new OkHttpClient();
-        MediaType mediaType = MediaType.parse("audio/wav");
-        RequestBody body = RequestBody.create(mediaType, audioText);
-
-        Request request = new Request.Builder()
-                .url(API_URL)
-                .post(body)
-                .addHeader("Authorization", "Bearer " + API_KEY)
-                .addHeader("Content-Type", "audio/wav")
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                System.out.println("Response: " + response.body().string());
-            } else {
-                System.out.println("Request failed: " + response.message());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -108,19 +87,23 @@ public class GoogleSpeechToText {
         configuredGoogleAPI.send(configRequest);
         AudioFormat withAudioFormat = new AudioFormat(SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, CHANNELS, SIGNED, BIG_ENDIAN);
         DataLine.Info microphone = new DataLine.Info(TargetDataLine.class, withAudioFormat);
-        TargetDataLine recorder = (TargetDataLine) AudioSystem.getLine(microphone)
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            associateSessionIdWithMicrophone(id, recorder);
-            recorder.open(withAudioFormat);
-            recorder.start();
-            byte[] data = new byte[1024];
-            log.info("Start speaking");
-            while (recorder.isOpen()) {
-                int bytesRead = recorder.read(data, 0, data.length);
-                out.write(data, 0, bytesRead);
-            }
-            audioText = out.toByteArray();
+        TargetDataLine recorder = (TargetDataLine) AudioSystem.getLine(microphone);
+        associateSessionIdWithMicrophone(id, recorder);
+        recorder.open(withAudioFormat);
+        recorder.start();
+        log.info("Start speaking");
+        AudioInputStream audio = new AudioInputStream(recorder);
+        while (recorder.isOpen()) {
+            byte[] data = new byte[6400];
+            audio.read(data);
+            StreamingRecognizeRequest speechToTextRequest =
+                    StreamingRecognizeRequest.newBuilder()
+                            .setAudioContent(ByteString.copyFrom(data))
+                            .build();
+            configuredGoogleAPI.send(speechToTextRequest);
         }
+        responseObserver.onComplete();
+    }
 
     private void associateSessionIdWithMicrophone(String id, TargetDataLine recorder) {
         sessions.put(id, recorder);
