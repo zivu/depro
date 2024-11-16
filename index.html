@@ -35,7 +35,8 @@
             <button id="actionButton" class="btn btn-success" onclick="handleButtonClick()">Start</button>
         </div>
     </div>
-    <p> This is beta version of the application. So it may crash and work incorrectly :) </p>
+    <p>Connect your headsets to make sure that this app doesn't listen itself.
+        <p>This is beta version of the application. So it may crash and work incorrectly :) </p>
     <div id="qrcode"></div>
     <p id="betaText">Scan the QR code to see my YouTube channel</p>
 
@@ -78,7 +79,7 @@
             countdownElement.textContent = `3..2..1`;
             setTimeout(() => {
                 countdownElement.textContent = `Speak!`;
-            }, 1000);
+            }, 2000);
         }
         function wait(wait) {
             wait.textContent = `Wait.`;

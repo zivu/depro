@@ -74,6 +74,20 @@ public class GoogleSpeechToText {
     @SneakyThrows
     public void streamingMicRecognize(String id) {
         ResponseObserver<StreamingRecognizeResponse> responseObserver = ResponseObserverFactory.create(chatGPTService, textToSpeechService, audioService);
+        ClientStream<StreamingRecognizeRequest> configuredGoogleAPI = prepareGoogleSTTService(responseObserver);
+        AudioFormat withAudioFormat = new AudioFormat(SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, CHANNELS, SIGNED, BIG_ENDIAN);
+        DataLine.Info microphone = new DataLine.Info(TargetDataLine.class, withAudioFormat);
+        TargetDataLine recorder = (TargetDataLine) AudioSystem.getLine(microphone);
+        associateSessionIdWithMicrophone(id, recorder);
+        recorder.open(withAudioFormat);
+        recorder.start();
+        log.info("Start speaking");
+        AudioInputStream audio = new AudioInputStream(recorder);
+        record(recorder, audio, configuredGoogleAPI);
+        responseObserver.onComplete();
+    }
+
+    private ClientStream<StreamingRecognizeRequest> prepareGoogleSTTService(ResponseObserver<StreamingRecognizeResponse> responseObserver) {
         ClientStream<StreamingRecognizeRequest> configuredGoogleAPI =
                 googleSpeechAPI.streamingRecognizeCallable().splitCall(responseObserver);
         StreamingRecognitionConfig streamingRecognitionConfig =
@@ -85,14 +99,10 @@ public class GoogleSpeechToText {
                         .setStreamingConfig(streamingRecognitionConfig)
                         .build();
         configuredGoogleAPI.send(configRequest);
-        AudioFormat withAudioFormat = new AudioFormat(SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, CHANNELS, SIGNED, BIG_ENDIAN);
-        DataLine.Info microphone = new DataLine.Info(TargetDataLine.class, withAudioFormat);
-        TargetDataLine recorder = (TargetDataLine) AudioSystem.getLine(microphone);
-        associateSessionIdWithMicrophone(id, recorder);
-        recorder.open(withAudioFormat);
-        recorder.start();
-        log.info("Start speaking");
-        AudioInputStream audio = new AudioInputStream(recorder);
+        return configuredGoogleAPI;
+    }
+
+    private static void record(TargetDataLine recorder, AudioInputStream audio, ClientStream<StreamingRecognizeRequest> configuredGoogleAPI) throws IOException {
         while (recorder.isOpen()) {
             byte[] data = new byte[6400];
             audio.read(data);
@@ -102,7 +112,6 @@ public class GoogleSpeechToText {
                             .build();
             configuredGoogleAPI.send(speechToTextRequest);
         }
-        responseObserver.onComplete();
     }
 
     private void associateSessionIdWithMicrophone(String id, TargetDataLine recorder) {

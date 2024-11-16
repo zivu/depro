@@ -24,7 +24,7 @@ public class ChatGPTService {
     public static final String APPLICATION_JSON = "application/json";
     public static final String BEARER = "Bearer ";
     public static final String CHAT_FUNCTIONALITY_DESCRIPTION = """
-            You are an assistant that translates technical IT language into simple, evežryday human language. For example,\s
+            You are an assistant that translates technical IT language into simple, everyday human language. For example,\s
             if you receive 'Our PM said that we have a bug,' you should translate it to 'One of our managers said we have a bad situation.'\s
             Use plain language that avoids technical terms. Don't answer any questions, but translate them instead.""";
     public static final String MODEL = "model";
