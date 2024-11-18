@@ -15,81 +15,124 @@
             align-items: center;
         }
         #actionButton {
-            margin-top: 20px; /* Add space between the button and the text */
+            margin-top: 20px;
         }
         #qrcode {
-            margin-top: 50px; /* Increase space between the button and the QR code */
-            width: 100px; /* Set the width of the QR code */
-            height: 100px; /* Set the height of the QR code */
+            margin-top: 50px;
+            width: 100px;
+            height: 100px;
         }
         #betaText {
-            margin-top: 10px; /* Add space between the QR code and the text */
+            margin-top: 10px;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-    <div class="card text-center">
-        <div class="card-body">
-            <h2 id="statusText">How about translating some IT jargon?</h2>
-            <button id="actionButton" class="btn btn-success" onclick="handleButtonClick()">Start</button>
-        </div>
+<div class="card text-center">
+    <div class="card-body">
+        <h2 id="statusText">How about translating some IT jargon?</h2>
+        <button id="actionButton" class="btn btn-success" onclick="handleButtonClick()">Start</button>
     </div>
-    <p>Connect your headsets to make sure that this app doesn't listen itself.
-        <p>This is beta version of the application. So it may crash and work incorrectly :) </p>
-    <div id="qrcode"></div>
-    <p id="betaText">Scan the QR code to see my YouTube channel</p>
+</div>
+<p>Connect your headsets to make sure that this app doesn't listen to itself.</p>
+<p>This is a beta version of the application. It may crash and work incorrectly :)</p>
+<div id="qrcode"></div>
+<p id="betaText">Scan the QR code to see my YouTube channel</p>
 
+<script>
+    const id = Math.floor(Math.random() * 1000);
+    let mediaRecorder;
+    let audioChunks = [];
 
-    <script>
-        const id = Math.floor(Math.random() * 1000); // Initialize the id variable with a random value
-        function handleButtonClick() {
-            const button = document.getElementById('actionButton');
-            const statusText = document.getElementById('statusText');
-            if (button.classList.contains('btn-success')) {
-                // Change button style and text immediately
-                button.classList.remove('btn-success');
-                button.classList.add('btn-dark');
-                button.textContent = 'Stop';
-                statusText.textContent = '3';
-                countdown(statusText);
-                // Send start request
-                fetch(`http://localhost:8080/api/chat/ask?id=${id}`)
-                    .catch(error => console.error('Error:', error));
-            } else {
-                // Change button style and text immediately
-                button.classList.remove('btn-dark');
-                button.classList.add('btn-success');
-                button.textContent = 'Start';
-                wait(statusText);
-                // Send stop request
-                fetch(`http://localhost:8080/api/chat/stop?id=${id}`)
-                    .catch(error => console.error('Error:', error));
+    async function handleButtonClick() {
+        const button = document.getElementById('actionButton');
+        const statusText = document.getElementById('statusText');
+
+        if (button.classList.contains('btn-success')) {
+            // Start recording
+            button.classList.remove('btn-success');
+            button.classList.add('btn-dark');
+            button.textContent = 'Stop';
+            statusText.textContent = '3';
+            countdown(statusText);
+
+            // Start microphone recording
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    audioChunks = [];
+
+                    const formData = new FormData();
+                    formData.append("file", audioBlob);
+                    //https://depro-442010.lm.r.appspot.com
+                    // Upload audio to backend
+                    await fetch(`http://localhost:8080/api/chat/ask?id=${id}`, {
+                        method: "POST",
+                        body: formData
+                    })
+                        .then(async response => {
+                            if (!response.ok) {
+                                throw new Error(`Server error: ${response.statusText}`);
+                            }
+                            return response.blob(); // Get the audio response as a blob
+                        })
+                        .then(audioResponseBlob => {
+                            const audioUrl = URL.createObjectURL(audioResponseBlob); // Create a URL for the audio blob
+                            const audioElement = new Audio(audioUrl); // Create an audio element
+                            audioElement.play(); // Play the audio
+                        })
+                        .catch(error => console.error("Error uploading or playing audio:", error));
+                };
+
+                mediaRecorder.start();
+            } catch (error) {
+                console.error("Error accessing microphone:", error);
+                alert("Failed to access microphone. Please allow microphone permissions.");
+            }
+        } else {
+            // Stop recording
+            button.classList.remove('btn-dark');
+            button.classList.add('btn-success');
+            button.textContent = 'Start';
+            wait(statusText);
+
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
             }
         }
+    }
 
-        // Generate QR code
-        new QRCode(document.getElementById("qrcode"), {
-            text: "https://youtu.be/CZZXkiyklsM",
-            width: 100,
-            height: 100
-        });
+    // Generate QR code
+    new QRCode(document.getElementById("qrcode"), {
+        text: "https://youtu.be/CZZXkiyklsM",
+        width: 100,
+        height: 100
+    });
 
-        function countdown(countdownElement) {
-            countdownElement.textContent = `3..2..1`;
+    function countdown(countdownElement) {
+        countdownElement.textContent = `3..2..1`;
+        setTimeout(() => {
+            countdownElement.textContent = `Speak!`;
+        }, 2000);
+    }
+
+    function wait(waitElement) {
+        waitElement.textContent = `Wait.`;
+        setTimeout(() => {
+            waitElement.textContent = `Wait..`;
             setTimeout(() => {
-                countdownElement.textContent = `Speak!`;
-            }, 2000);
-        }
-        function wait(wait) {
-            wait.textContent = `Wait.`;
-            setTimeout(() => {
-                wait.textContent = `Wait..`;
-                setTimeout(() => {
-                    wait.textContent = `How about translating some IT jargon?`;
-                }, 1000);
+                waitElement.textContent = `How about translating some IT jargon?`;
             }, 1000);
-        }
-    </script>
+        }, 1000);
+    }
+</script>
 </body>
 </html>
