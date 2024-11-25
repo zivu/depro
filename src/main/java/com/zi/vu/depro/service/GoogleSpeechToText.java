@@ -86,32 +86,32 @@ public class GoogleSpeechToText {
      * @param id unique session id of a user, used to connect it with microphone.
      */
     @SneakyThrows
-    public ByteString streamingMicRecognize(String id, byte[] audioBytes) {
-        AudioFormat format = new AudioFormat(16000, 16, 1, true, false);
-        File outputFile = new File("output.wav");
-        saveToWav(audioBytes, outputFile, format);
-        String translation = "";
-        try (SpeechClient speechClient = SpeechClient.create()) {
-            RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-                    .setSampleRateHertz(48000)
-                    .setLanguageCode("en-US")
-                    .build();
-            RecognitionAudio audio = RecognitionAudio.newBuilder()
-                    .setContent(ByteString.copyFrom(audioBytes))
-                    .build();
-            RecognizeRequest request = RecognizeRequest.newBuilder()
-                    .setConfig(config)
-                    .setAudio(audio)
-                    .build();
-            RecognizeResponse response = speechClient.recognize(request);
-            String text = response.getResultsList().getFirst().getAlternativesList().getFirst().getTranscript();
-            translation = chatGPTService.translate(text);
-        } catch (Exception e) {
-            log.error("ex: {}", e.getMessage());
-        }
-        return textToSpeechService.toSpeech(translation);
+public ByteString streamingMicRecognize(String id, byte[] audioBytes) {
+    AudioFormat format = new AudioFormat(16000, 16, 1, true, false);
+    File outputFile = new File("output.wav");
+    saveToWav(audioBytes, outputFile, format);
+    String translation = "";
+    try (SpeechClient speechClient = SpeechClient.create()) {
+        RecognitionConfig config = RecognitionConfig.newBuilder()
+                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
+                .setSampleRateHertz(16000) // Ensure sample rate matches the audio format
+                .setLanguageCode("en-US")
+                .build();
+        RecognitionAudio audio = RecognitionAudio.newBuilder()
+                .setContent(ByteString.copyFrom(audioBytes))
+                .build();
+        RecognizeRequest request = RecognizeRequest.newBuilder()
+                .setConfig(config)
+                .setAudio(audio)
+                .build();
+        RecognizeResponse response = speechClient.recognize(request);
+        String text = response.getResultsList().get(0).getAlternativesList().get(0).getTranscript();
+        translation = chatGPTService.translate(text);
+    } catch (Exception e) {
+        log.error("ex: {}", e.getMessage());
     }
+    return textToSpeechService.toSpeech(translation);
+}
 
     private ClientStream<StreamingRecognizeRequest> prepareGoogleSTTService(ResponseObserver<StreamingRecognizeResponse> responseObserver) {
         ClientStream<StreamingRecognizeRequest> configuredGoogleAPI =
