@@ -1,5 +1,5 @@
 # Getting Started
-This service uses Google Cloud Speech-to-Text and Text-to-Speech APIs to convert audio to text and text to audio. 
+This application translates IT jargon to plain language. The service uses Google Cloud Speech-to-Text and Text-to-Speech APIs to convert audio to text and text to audio. 
 The service also uses the ChatGPT API to generate responses to user queries.
 In order to use this application, you need to set up Google Cloud and OpenAI accounts and obtain the required tokens.
 For more information on setting up the required tokens and environment variables, refer to the Setup Google Cloud Account
