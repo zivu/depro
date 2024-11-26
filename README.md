@@ -28,7 +28,7 @@ and Setup OpenAI Account sections.
 3. Press Create new secret key.
 4. Type in the name of the key and press Create secret key.
 5. Press Copy to copy the key to your clipboard.
-6. Set openai.api.key environment variable to the key you copied.
+6. Use copied key to set openai.api.key property inside application.properties file.
 
 ### Running the Application
 1. Run the application using the following command:
