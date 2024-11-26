@@ -9,15 +9,19 @@ and Setup OpenAI Account sections.
 1. Go to https://console.cloud.google.com.
 2. Create new account/sign in to your Google Cloud account.
 3. Create a new project.
-4. Open menu in the top left corner and select IAM & Admin -> Service Accounts.
-5. Press Create Service Account.
-6. Type in the name of the service account and press Create And Continue.
-7. Select the role Project -> Cloud Speech-to-Text service and press Continue.
-8. Press Done.
-9. You will see the service account you created. Press the three dots on the right and select Manage keys.
-10. Press Add Key -> Create new key.
-11. Select JSON and press Create.
-12. Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the path of the JSON file you downloaded.
+4. Open it and search for "Cloud Speech-to-Text API".
+5. Press "Enable" button.
+6. Search for "Cloud Text-to-Speech API" and press "Enable" button.
+7. Open menu in the top left corner and select IAM & Admin -> Service Accounts.
+8. Press Create Service Account.
+9. Type in the name of the service account and press Create And Continue.
+10. Select the role Project -> Cloud Speech Administrator.
+11. Press "Add another role" and choose "Editor" and press Continue. 
+12. Press Done. 
+13. You will see the service account you created. Press the three dots on the right and select Manage keys. 
+14. Press Add Key -> Create new key. 
+15. Select JSON and press Create. 
+16. Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the path of the JSON file you downloaded.
 
 ### Setup OpenAI Account
 1. Go to https://platform.openai.com.
