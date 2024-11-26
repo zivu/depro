@@ -15,13 +15,12 @@ and Setup OpenAI Account sections.
 7. Open menu in the top left corner and select IAM & Admin -> Service Accounts.
 8. Press Create Service Account.
 9. Type in the name of the service account and press Create And Continue.
-10. Select the role Project -> Cloud Speech Administrator.
-11. Press "Add another role" and choose "Editor" and press Continue. 
-12. Press Done. 
-13. You will see the service account you created. Press the three dots on the right and select Manage keys. 
-14. Press Add Key -> Create new key. 
-15. Select JSON and press Create. 
-16. Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the path of the JSON file you downloaded.
+10. Select the role Project -> Owner and press Continue. 
+11. Press Done. 
+12. You will see the service account you created. Press the three dots on the right and select Manage keys. 
+13. Press Add Key -> Create new key. 
+14. Select JSON and press Create. 
+15. Set the environment variable GOOGLE_APPLICATION_CREDENTIALS to the path of the JSON file you downloaded.
 
 ### Setup OpenAI Account
 1. Go to https://platform.openai.com.
