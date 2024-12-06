@@ -27,6 +27,7 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
 </head>
 <body>
 <div class="card text-center">
@@ -42,7 +43,7 @@
 
 <script>
     const id = Math.floor(Math.random() * 1000);
-    let mediaRecorder;
+    let recorder;
     let audioChunks = [];
 
 async function handleButtonClick() {
@@ -66,13 +67,31 @@ async function handleButtonClick() {
                     sampleRate: 44100
                 }
             });
-            mediaRecorder = new MediaRecorder(stream);
+            recorder = RecordRTC(stream, {
+                type: 'audio',
+                mimeType: 'audio/wav',
+                recorderType: StereoAudioRecorder,
+                desiredSampRate: 44100,
+                numberOfAudioChannels: 1,
+                ondataavailable: function(blob) {
+                    audioChunks.push(blob);
+                }
+            });
 
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
+            recorder.startRecording();
+        } catch (error) {
+            console.error("Error accessing microphone:", error);
+            alert("Failed to access microphone. Please allow microphone permissions.");
+        }
+    } else {
+        // Stop recording
+        button.classList.remove('btn-dark');
+        button.classList.add('btn-success');
+        button.textContent = 'Start';
+        wait(statusText);
 
-            mediaRecorder.onstop = async () => {
+        if (recorder && recorder.getState() === "recording") {
+            recorder.stopRecording(async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 audioChunks = [];
 
@@ -96,22 +115,7 @@ async function handleButtonClick() {
                         audioElement.play(); // Play the audio
                     })
                     .catch(error => console.error("Error uploading or playing audio:", error));
-            };
-
-            mediaRecorder.start();
-        } catch (error) {
-            console.error("Error accessing microphone:", error);
-            alert("Failed to access microphone. Please allow microphone permissions.");
-        }
-    } else {
-        // Stop recording
-        button.classList.remove('btn-dark');
-        button.classList.add('btn-success');
-        button.textContent = 'Start';
-        wait(statusText);
-
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-            mediaRecorder.stop();
+            });
         }
     }
 }
